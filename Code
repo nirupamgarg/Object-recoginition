@@ -1,0 +1,107 @@
+#importing the required libraries
+
+import tensorflow as tf
+import numpy as np
+import keras
+import cv2
+import matplotlib.pyplot as plt
+from keras.models import Sequential, load_model
+from keras.layers import Dense, Conv2D, LeakyReLU, MaxPooling2D, Dropout, Flatten, Activation
+from keras.preprocessing.image import ImageDataGenerator
+
+#splitting the dataset
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
+x_train /= 255
+x_test /= 255
+print('x_train shape:', x_train.shape)
+print(x_train.shape[0], 'train samples')
+print(x_test.shape[0], 'test samples')
+
+y_train = keras.utils.to_categorical(y_train, 10)
+y_test = keras.utils.to_categorical(y_test, 10)
+
+test_x = np.array(x_test[0:5000])
+test_y = np.array(y_test[0:5000])
+x_valid = np.array(x_test[5000:])
+y_valid = np.array(y_test[5000:])
+
+# Creating the model
+def CNN_model():
+  model = Sequential()
+  
+# 32x32x3
+  input_shape = (32,32,3)
+  model.add(Conv2D(32, 4, input_shape=input_shape, padding='same'))
+  model.add(LeakyReLU(0.1))
+# 32x32x32  
+  model.add(MaxPooling2D((2,2), padding='same'))
+  model.add(Dropout(0.3))
+# 16x16x32
+  model.add(Conv2D(64, 4, padding='same'))
+  model.add(LeakyReLU(0.1))
+# 16x16x64
+  model.add(MaxPooling2D((2,2), padding='same'))
+  model.add(Dropout(0.3))
+# 8x8x64
+  model.add(Conv2D(128, 4, padding='same'))
+  model.add(LeakyReLU(0.1))
+# 8x8x128
+  model.add(Conv2D(256, 4, padding='same'))
+  model.add(LeakyReLU(0.1))
+# 8x8x256
+  model.add(MaxPooling2D((2,2), padding='same'))
+  model.add(Dropout(0.5))
+# 4x4x256
+  model.add(Conv2D(512, 4, padding='same'))
+  model.add(LeakyReLU(0.1))
+# 4x4x512
+  model.add(Conv2D(1024, 4, padding='same'))
+  model.add(LeakyReLU(0.1))
+# 4x4x1024
+  model.add(Flatten())
+  model.add(Dense(10))
+  model.add(Activation('softmax'))
+  
+  model.summary()
+  return model
+
+model = CNN_model()
+model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adadelta(), metrics=['accuracy'])
+model.fit(x_train, y_train, batch_size=200, epochs=12, verbose=1, validation_data=(x_valid, y_valid))
+
+#Testing the model
+score = Model.evaluate(test_x, test_y, verbose=0)
+print('Test loss:', score[0]*100)
+print('Test accuracy:', score[1]*100)
+
+#Saving the model
+model.save("tflite_model_name.tflite")
+print("model saved to disk")
+
+#Defining a few functions needed to predict
+def preprocess(x_train):
+  x_train = x_train.astype('float32')
+  x_train /= 255
+  print('x_train shape:', x_train.shape)
+  return x_train
+
+
+def predict(input_image):
+  labels = ['Fish', 'Automobile', 'Bird', 'Cat', 'Deer', 'Dog', 'Frog', 'Horse', 'Ship', 'Truck']
+  input_image = preprocess(input_image)
+  image = cv2.resize(input_image, (32, 32))
+  plt.imshow(image)
+  plt.show()
+  img = image.reshape(1, 32, 32, 3)
+  num_output = Model.predict_classes(img)
+  output = labels[num_output[0]]
+  return output
+
+#importing the image you want to predict
+  your_picture = cv2.imread('--location of the picture you want to detect--')
+
+#prining the result and the picture
+print(predict(frog))
